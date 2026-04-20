@@ -522,6 +522,8 @@
       updateCandleInfo();
     }, 1800);
   }
+
+  function playDirge() {
     try {
       var ctx  = getAudioCtx();
       var now  = ctx.currentTime;
