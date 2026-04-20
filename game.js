@@ -1,5 +1,5 @@
 ﻿/**
- * BigShort Game - game.js
+ * Candle Goblin - game.js
  * Page-context script (injected via content.js).
  *
  * MASKING STRATEGY:
@@ -316,56 +316,83 @@
   }
 
   /* ---- Black cover div -------------------------------------------- */
+  var _resizeObserver = null;
+
   function createChartCover() {
     var existing = document.getElementById('bsg-chart-cover');
     if (existing) existing.remove();
 
-    // Use the element the chart was actually rendered into, not a hardcoded ID
     var container = (rt.chart && rt.chart.renderTo) || document.getElementById('container');
     if (!container) { dbg('ERROR: chart container not found — cover cannot be placed'); return; }
     dbg('createChartCover: container=' + (container.id || '(no id)') + ' size=' + container.offsetWidth + 'x' + container.offsetHeight);
 
     var cover = document.createElement('div');
     cover.id = 'bsg-chart-cover';
+    var lbl = document.createElement('div');
+    lbl.id = 'bsg-cover-label';
+    lbl.textContent = '?';
+    cover.appendChild(lbl);
     container.appendChild(cover);
-    updateCoverPosition(false); // no animation on creation
+    updateCoverPosition(false);
+
+    // Reposition cover whenever the chart container is resized
+    // (window resize, panel toggle, zoom change, etc.)
+    if (_resizeObserver) _resizeObserver.disconnect();
+    var resizeDebounce;
+    _resizeObserver = new ResizeObserver(function() {
+      clearTimeout(resizeDebounce);
+      resizeDebounce = setTimeout(function() {
+        updateCoverPosition(false);
+      }, 80);
+    });
+    _resizeObserver.observe(container);
   }
 
   function updateCoverPosition(animate) {
     var cover = document.getElementById('bsg-chart-cover');
-    if (!cover)              { dbg('updateCoverPosition: cover div missing'); return; }
-    if (!rt.chart)           { dbg('updateCoverPosition: rt.chart is null');  return; }
-    if (!rt.allData.length)  { dbg('updateCoverPosition: allData empty');     return; }
-
-    var xAxis     = rt.chart.xAxis[0];
-    var axisMin   = xAxis.min;
-    var axisMax   = xAxis.max;
-    var plotLeft  = rt.chart.plotLeft;
-    var plotWidth = rt.chart.plotWidth;
-    var chartH    = rt.chart.chartHeight;
+    if (!cover || !rt.chart || !rt.allData.length) return;
 
     var revealIdx = Math.min(rt.revealedCount, rt.allData.length) - 1;
-    var ts        = rt.allData[revealIdx][0];
-    // Place the cover edge 70% into the next candle so the revealed candle is fully visible
-    var coverTs   = ts + rt.candleInterval * 0.7;
+    var chartH    = rt.chart.chartHeight;
 
-    // Linear interpolation across the visible axis window — toPixels() is
-    // unreliable on Highstock because the axis min/max span the full dataset.
-    var fraction  = (coverTs - axisMin) / (axisMax - axisMin);
-    var leftPx    = plotLeft + fraction * plotWidth;
-    leftPx        = Math.max(plotLeft, Math.min(leftPx, plotLeft + plotWidth));
-    var widthPx   = (plotLeft + plotWidth) - leftPx;
+    // Read position directly from the rendered SVG candle element.
+    // This is pixel-perfect regardless of zoom, pan, or resize —
+    // no axis math, no dependency on xAxis.min/max sync timing.
+    var container = cover.parentElement;
+    var seriesEl  = container && container.querySelector(
+      '.highcharts-candlestick-series, .highcharts-ohlc-series'
+    );
+    if (seriesEl) {
+      var points = seriesEl.querySelectorAll('.highcharts-point');
+      var pt = points[revealIdx];
+      if (pt) {
+        var ptRect = pt.getBoundingClientRect();
+        var ctRect = container.getBoundingClientRect();
+        // Left edge of cover = right edge of the revealed candle,
+        // clamped to the plot area boundaries.
+        var leftPx = Math.max(
+          rt.chart.plotLeft,
+          Math.min(ptRect.right - ctRect.left, rt.chart.plotLeft + rt.chart.plotWidth)
+        );
+        dbg('cover pos: revealIdx=' + revealIdx
+          + ' candleRight=' + Math.round(ptRect.right - ctRect.left)
+          + ' left=' + Math.round(leftPx)
+          + ' chartH=' + chartH);
+        cover.style.transition = animate ? 'left 0.45s ease' : 'none';
+        cover.style.left   = leftPx + 'px';
+        cover.style.height = chartH + 'px';
+        return;
+      }
+    }
 
-    dbg('cover pos: revealIdx=' + revealIdx
-      + ' ts=' + new Date(ts).toISOString().slice(11,16)
-      + ' frac=' + fraction.toFixed(3)
-      + ' left=' + Math.round(leftPx) + ' width=' + Math.round(widthPx)
-      + ' axisMin=' + new Date(axisMin).toISOString().slice(11,16)
-      + ' axisMax=' + new Date(axisMax).toISOString().slice(11,16));
-
-    cover.style.transition = animate ? 'left 0.45s ease, width 0.45s ease' : 'none';
-    cover.style.left   = leftPx  + 'px';
-    cover.style.width  = widthPx + 'px';
+    // Fallback: linear interpolation if SVG elements not found
+    var xAxis     = rt.chart.xAxis[0];
+    var fraction  = (rt.allData[revealIdx][0] + rt.candleInterval * 0.7 - xAxis.min) / (xAxis.max - xAxis.min);
+    var leftPx2   = rt.chart.plotLeft + fraction * rt.chart.plotWidth;
+    leftPx2       = Math.max(rt.chart.plotLeft, Math.min(leftPx2, rt.chart.plotLeft + rt.chart.plotWidth));
+    dbg('cover pos (fallback): revealIdx=' + revealIdx + ' left=' + Math.round(leftPx2));
+    cover.style.transition = animate ? 'left 0.45s ease' : 'none';
+    cover.style.left   = leftPx2 + 'px';
     cover.style.height = chartH  + 'px';
 
     var lbl = document.getElementById('bsg-cover-label');
@@ -378,8 +405,150 @@
   }
 
   function removeChartCover() {
+    if (_resizeObserver) { _resizeObserver.disconnect(); _resizeObserver = null; }
     var cover = document.getElementById('bsg-chart-cover');
     if (cover) cover.remove();
+  }
+
+  /* ---- Sound effects (Web Audio API — no external files) ----------- */
+  var _audioCtx = null;
+  function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+  }
+
+  function playWin() {
+    try {
+      var ctx  = getAudioCtx();
+      var now  = ctx.currentTime;
+      // Ascending major arpeggio: C5 E5 G5 C6
+      var notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach(function(freq, i) {
+        var osc  = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        gain.gain.setValueAtTime(0, now + i * 0.08);
+        gain.gain.linearRampToValueAtTime(0.25, now + i * 0.08 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.3);
+      });
+    } catch(e) {}
+  }
+
+  function playLoss() {
+    try {
+      var ctx  = getAudioCtx();
+      var now  = ctx.currentTime;
+      // Descending minor "wah-wah": Bb4 G4 Eb4 Bb3
+      var notes = [466.16, 392.00, 311.13, 233.08];
+      notes.forEach(function(freq, i) {
+        var osc  = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now + i * 0.18);
+        osc.frequency.linearRampToValueAtTime(freq * 0.97, now + i * 0.18 + 0.15);
+        gain.gain.setValueAtTime(0.22, now + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.18);
+        osc.stop(now + i * 0.18 + 0.4);
+      });
+    } catch(e) {}
+  }
+
+  function playSpooky() {
+    try {
+      var ctx = getAudioCtx();
+      var now = ctx.currentTime;
+      // Eerie descending tritone wobble
+      var freqs = [369.99, 311.13, 261.63, 233.08];
+      freqs.forEach(function(freq, i) {
+        var osc      = ctx.createOscillator();
+        var lfo      = ctx.createOscillator();
+        var lfoGain  = ctx.createGain();
+        var gain     = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.3);
+        lfo.frequency.setValueAtTime(3.5 + i * 0.4, now);
+        lfoGain.gain.setValueAtTime(8, now);
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        gain.gain.setValueAtTime(0, now + i * 0.3);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.3 + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.3 + 0.55);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        lfo.start(now + i * 0.3);
+        osc.start(now + i * 0.3);
+        osc.stop(now + i * 0.3 + 0.6);
+        lfo.stop(now + i * 0.3 + 0.6);
+      });
+    } catch(e) {}
+  }
+
+  function waitAndSee() {
+    if (!rt.waitingForGuess) return;
+    if (rt.revealedCount >= rt.allData.length) { endOfCandles(); return; }
+
+    playSpooky();
+    rt.waitingForGuess = false;
+    setGuessButtonsDisabled(true);
+
+    // Reveal the next candle without any bet or trade recorded
+    rt.revealedCount++;
+    updateCoverPosition(true);
+
+    var candle    = rt.allData[rt.revealedCount - 1];
+    var prevClose = rt.allData[rt.revealedCount - 2][4];
+    var col = candle[4] >= prevClose ? '#22c55e' : '#f87171';
+    var dir = candle[4] >= prevClose ? '\u25b2' : '\u25bc';
+    var el = document.getElementById('bsg-result');
+    if (el) {
+      el.innerHTML = '<span class="bsg-info">\ud83d\udc7b Watching… <span style="color:' + col + '">' + dir + ' $' + candle[4].toFixed(2) + '</span></span>';
+      el.style.display = 'block';
+    }
+    updateProgress();
+
+    setTimeout(function() {
+      if (rt.revealedCount >= rt.allData.length) { endOfCandles(); return; }
+      clearResult();
+      rt.waitingForGuess = true;
+      setGuessButtonsDisabled(false);
+      updateCandleInfo();
+    }, 1800);
+  }
+    try {
+      var ctx  = getAudioCtx();
+      var now  = ctx.currentTime;
+      // Slow descending minor funeral tones with tremolo
+      var notes = [220.00, 196.00, 174.61, 164.81, 146.83];
+      notes.forEach(function(freq, i) {
+        var osc     = ctx.createOscillator();
+        var tremOsc = ctx.createOscillator();
+        var tremGain = ctx.createGain();
+        var gain    = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now + i * 0.55);
+        tremOsc.frequency.setValueAtTime(5, now);
+        tremGain.gain.setValueAtTime(0.06, now);
+        tremOsc.connect(tremGain);
+        tremGain.connect(osc.frequency);
+        gain.gain.setValueAtTime(0, now + i * 0.55);
+        gain.gain.linearRampToValueAtTime(0.3, now + i * 0.55 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.55 + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        tremOsc.start(now + i * 0.55);
+        osc.start(now + i * 0.55);
+        osc.stop(now + i * 0.55 + 0.6);
+        tremOsc.stop(now + i * 0.55 + 0.6);
+      });
+    } catch(e) {}
   }
 
   /* ---- Game actions ----------------------------------------------- */
@@ -488,10 +657,10 @@
     var delta = correct ? bet : -bet;
     persist.bankroll = Math.max(0, persist.bankroll + delta);
     persist.trades   = persist.trades + 1;
-    if (correct) persist.wins = persist.wins + 1;
+    if (correct) { persist.wins = persist.wins + 1; playWin(); } else { playLoss(); }
 
     rt.revealedCount++;
-    updateCoverPosition(true); // animate the slide
+    updateCoverPosition(true);
 
     showResult(correct, delta, nextCandle, prevClose);
     updateUI();
@@ -499,6 +668,7 @@
     setTimeout(function() {
       if (rt.revealedCount >= rt.allData.length) { endOfCandles(); return; }
       if (persist.bankroll <= 0) {
+        playDirge();
         setMessage('Bankroll depleted!', 'warn');
         var lr2 = document.getElementById('bsg-loan-row');
         if (lr2) lr2.style.display = 'block';
@@ -559,7 +729,7 @@
     panel.id = 'bsg-panel';
     panel.innerHTML = [
       '<div id="bsg-header">',
-        '<span id="bsg-logo">BigShort Game</span>',
+        '<span id="bsg-logo">&#x1F47B; Candle Goblin</span>',
         '<button id="bsg-min-btn">&#8722;</button>',
         '<button id="bsg-close-btn">&#x2715;</button>',
       '</div>',
@@ -581,6 +751,7 @@
             '<button class="bsg-bet" data-amt="5000">$5K</button>',
             '<button class="bsg-bet" data-amt="10000">$10K</button>',
             '<button class="bsg-bet" data-amt="25000">$25K</button>',
+            '<input id="bsg-bet-custom" type="number" min="1" step="100" placeholder="Custom" title="Custom bet amount" />',
           '</div>',
         '</div>',
         '<div id="bsg-candle-info"></div>',
@@ -591,6 +762,7 @@
         '<div id="bsg-guess-row" style="display:none;">',
           '<button id="bsg-long-btn"  class="bsg-btn bsg-bull">LONG</button>',
           '<button id="bsg-short-btn" class="bsg-btn bsg-bear">SHORT</button>',
+          '<button id="bsg-wait-btn"  class="bsg-btn bsg-wait">&#128373; Wait</button>',
         '</div>',
         '<div id="bsg-result"></div>',
         '<div id="bsg-loan-row" style="display:none;">',
@@ -616,6 +788,7 @@
     document.getElementById('bsg-stop-btn').addEventListener('click', stopGame);
     document.getElementById('bsg-long-btn').addEventListener('click', function() { makeGuess('long'); });
     document.getElementById('bsg-short-btn').addEventListener('click', function() { makeGuess('short'); });
+    document.getElementById('bsg-wait-btn').addEventListener('click', waitAndSee);
     document.getElementById('bsg-loan-btn').addEventListener('click', getLoan);
 
     document.querySelectorAll('.bsg-bet').forEach(function(btn) {
@@ -623,9 +796,23 @@
         document.querySelectorAll('.bsg-bet').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         rt.bet = parseInt(btn.getAttribute('data-amt'), 10);
+        document.getElementById('bsg-bet-custom').value = '';
         var sess = loadSession();
         if (sess) { sess.bet = rt.bet; saveSession(sess); }
       });
+    });
+
+    document.getElementById('bsg-bet-custom').addEventListener('change', function() {
+      var val = parseInt(this.value, 10);
+      if (!val || val < 1) { this.value = ''; return; }
+      rt.bet = val;
+      document.querySelectorAll('.bsg-bet').forEach(function(b) { b.classList.remove('active'); });
+      var sess = loadSession();
+      if (sess) { sess.bet = rt.bet; saveSession(sess); }
+    });
+
+    document.getElementById('bsg-bet-custom').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') this.blur();
     });
 
     makeDraggable(panel, document.getElementById('bsg-header'));
@@ -730,8 +917,10 @@
   function setGuessButtonsDisabled(disabled) {
     var l = document.getElementById('bsg-long-btn');
     var s = document.getElementById('bsg-short-btn');
+    var w = document.getElementById('bsg-wait-btn');
     if (l) l.disabled = disabled;
     if (s) s.disabled = disabled;
+    if (w) w.disabled = disabled;
   }
 
   /* ---- Draggable panel -------------------------------------------- */

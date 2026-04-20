@@ -32,6 +32,7 @@
 #bsg-chart-cover {
   position: absolute;
   top: 0;
+  right: 0;
   background: #000;
   z-index: 50;
   pointer-events: none;
@@ -194,6 +195,25 @@ body.bsg-game-mode .top-banner-outer {
   font-weight: 600;
 }
 
+#bsg-bet-custom {
+  background: #0f2040;
+  border: 1px solid #1e3a6e;
+  color: #cdd9ec;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  width: 72px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+#bsg-bet-custom::-webkit-inner-spin-button,
+#bsg-bet-custom::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+#bsg-bet-custom:focus {
+  border-color: #4ea3f6;
+  color: #fff;
+}
+#bsg-bet-custom::placeholder { color: #3a5070; }
+
 /* Candle info */
 #bsg-candle-info {
   padding: 8px 14px;
@@ -258,6 +278,18 @@ body.bsg-game-mode .top-banner-outer {
   background: #dc2626;
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
+}
+
+.bsg-wait {
+  background: #2d1b4e;
+  color: #d8b4fe;
+  font-size: 11px;
+  padding: 6px 10px;
+}
+.bsg-wait:hover:not(:disabled) {
+  background: #4c1d95;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.45);
 }
 
 .bsg-neutral {

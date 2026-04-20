@@ -1,8 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "BigShort Game",
+  "name": "Candle Goblin",
   "version": "1.0.0",
-  "description": "Candlestick guessing game for app.bigshort.com. Start with $100k — can you grow it?",
+  "description": "Candle Goblin — candlestick guessing game for app.bigshort.com. Start with $100k, can you grow it?",
+  "icons": {
+    "16":  "icon16.png",
+    "32":  "icon32.png",
+    "48":  "icon48.png",
+    "128": "icon128.png"
+  },
   "permissions": ["storage", "scripting", "tabs"],
   "host_permissions": ["https://app.bigshort.com/*"],
   "content_scripts": [
@@ -15,11 +21,17 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "BigShort Game"
+    "default_title": "Candle Goblin",
+    "default_icon": {
+      "16":  "icon16.png",
+      "32":  "icon32.png",
+      "48":  "icon48.png",
+      "128": "icon128.png"
+    }
   },
   "web_accessible_resources": [
     {
-      "resources": ["game.js"],
+      "resources": ["game.js", "icon_goblin.png"],
       "matches": ["https://app.bigshort.com/*"]
     }
   ]

@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BigShort Game</title>
+  <title>Candle Goblin</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      width: 230px;
+      width: 240px;
       background: #0a1628;
       color: #cdd9ec;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -17,14 +17,39 @@
 
     header {
       background: #0d1e3a;
-      padding: 10px 14px;
-      border-bottom: 1px solid #1e3a6e;
+      padding: 0;
+      border-bottom: 2px solid #b45309;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      overflow: hidden;
     }
 
-    header span { font-weight: 700; color: #4ea3f6; font-size: 14px; }
+    header img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      object-position: center 15%;
+      display: block;
+    }
+
+    header .title-bar {
+      width: 100%;
+      background: #0d1e3a;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    header .title-bar span {
+      font-weight: 800;
+      font-size: 15px;
+      background: linear-gradient(90deg, #f97316, #facc15);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
 
     .section {
       padding: 10px 14px;
@@ -88,7 +113,10 @@
 </head>
 <body>
   <header>
-    <span>📈 BigShort Game</span>
+    <img src="icon_goblin.png" alt="Candle Goblin" />
+    <div class="title-bar">
+      <span>&#x1F47B; Candle Goblin</span>
+    </div>
   </header>
 
   <div class="section">
@@ -117,7 +145,7 @@
     </div>
   </div>
 
-  <button id="toggle-btn">Toggle Game Panel</button>
+  <button id="toggle-btn">Toggle Candle Goblin Panel</button>
   <div id="status">Open app.bigshort.com to play</div>
 
   <script src="popup.js"></script>
