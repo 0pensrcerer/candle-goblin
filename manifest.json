@@ -31,7 +31,19 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["game.js", "icon_goblin.png"],
+      "resources": [
+        "game.js",
+        "icon_goblin.png",
+        "reactionimages/tendiessecured.png",
+        "reactionimages/onegreengenius.png",
+        "reactionimages/diamondhands.png",
+        "reactionimages/eatingthedip.png",
+        "reactionimages/positivetoxicrelationship.png",
+        "reactionimages/Guh.png",
+        "reactionimages/margincalled.png",
+        "reactionimages/boughtthetop.png",
+        "reactionimages/technicalastrology.png"
+      ],
       "matches": ["https://app.bigshort.com/*"]
     }
   ]

@@ -49,6 +49,25 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  var GOBLIN_URL  = document.documentElement.getAttribute('data-bsg-goblin-url') || '';
+  var WIN_URLS    = (document.documentElement.getAttribute('data-bsg-win-urls')  || '').split(',').filter(Boolean);
+  var LOSS_URLS   = (document.documentElement.getAttribute('data-bsg-loss-urls') || '').split(',').filter(Boolean);
+
+  function randomReaction(correct) {
+    // null = Wait & See — show a random image from all pools
+    if (correct === null) {
+      var all = WIN_URLS.concat(LOSS_URLS);
+      return all.length ? all[Math.floor(Math.random() * all.length)] : GOBLIN_URL;
+    }
+    var pool = correct ? WIN_URLS : LOSS_URLS;
+    if (!pool.length) return GOBLIN_URL;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function setCoverImage(url) {
+    var cover = document.getElementById('bsg-chart-cover');
+    if (cover) cover.style.backgroundImage = url ? 'url(' + url + ')' : 'none';
+  }
   var SS_KEY         = 'bsg_session';
   var LS_BANKROLL    = 'bsg_bankroll';
   var LS_LOANS       = 'bsg_loans';
@@ -328,10 +347,10 @@
 
     var cover = document.createElement('div');
     cover.id = 'bsg-chart-cover';
-    var lbl = document.createElement('div');
-    lbl.id = 'bsg-cover-label';
-    lbl.textContent = '?';
-    cover.appendChild(lbl);
+    if (GOBLIN_URL) {
+      cover.style.backgroundImage = 'url(' + GOBLIN_URL + ')';
+    }
+    // label removed — goblin image takes over
     container.appendChild(cover);
     updateCoverPosition(false);
 
@@ -502,6 +521,7 @@
     // Reveal the next candle without any bet or trade recorded
     rt.revealedCount++;
     updateCoverPosition(true);
+    setCoverImage(randomReaction(null)); // null = neutral/spooky
 
     var candle    = rt.allData[rt.revealedCount - 1];
     var prevClose = rt.allData[rt.revealedCount - 2][4];
@@ -663,6 +683,7 @@
 
     rt.revealedCount++;
     updateCoverPosition(true);
+    setCoverImage(randomReaction(correct));
 
     showResult(correct, delta, nextCandle, prevClose);
     updateUI();
@@ -682,6 +703,7 @@
       setGuessButtonsDisabled(false);
       updateCandleInfo();
       updateProgress();
+      setCoverImage(GOBLIN_URL); // reset to default goblin between guesses
     }, 1800);
   }
 
