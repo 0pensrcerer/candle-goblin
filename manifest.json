@@ -32,6 +32,10 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "game-state.js",
+        "game-chart.js",
+        "game-sounds.js",
+        "game-ui.js",
         "game.js",
         "icon_goblin.png",
         "reactionimages/tendiessecured.png",

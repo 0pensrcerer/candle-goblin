@@ -18,11 +18,15 @@
     lossImgs.map(function(n){ return chrome.runtime.getURL('reactionimages/' + n + '.png'); }).join(',')
   );
 
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('game.js');
-  script.setAttribute('data-bsg', '1');
-  document.documentElement.appendChild(script);
-  script.remove();
+  // Inject scripts in dependency order (plain <script> tags share page scope)
+  var scripts = ['game-state.js', 'game-chart.js', 'game-sounds.js', 'game-ui.js', 'game.js'];
+  scripts.forEach(function(name) {
+    var s = document.createElement('script');
+    s.src = chrome.runtime.getURL(name);
+    s.setAttribute('data-bsg', '1');
+    document.documentElement.appendChild(s);
+    s.remove();
+  });
 })();
 
 // Listen for messages from the popup (toggle panel)
