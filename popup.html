@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigShort Game</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 230px;
+      background: #0a1628;
+      color: #cdd9ec;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+    }
+
+    header {
+      background: #0d1e3a;
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e3a6e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header span { font-weight: 700; color: #4ea3f6; font-size: 14px; }
+
+    .section {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e3a6e;
+    }
+
+    .lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: #4a6080;
+    }
+
+    .bankroll {
+      font-size: 22px;
+      font-weight: 800;
+      color: #4ea3f6;
+      margin-top: 2px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .stat-box {
+      background: #071020;
+      border: 1px solid #1e3a6e;
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+
+    .stat-val { font-size: 15px; font-weight: 700; color: #cdd9ec; }
+
+    button {
+      display: block;
+      width: calc(100% - 28px);
+      margin: 10px 14px;
+      padding: 9px;
+      background: #1e3a6e;
+      border: none;
+      border-radius: 8px;
+      color: #cdd9ec;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #2a52a0; }
+
+    #status {
+      text-align: center;
+      padding: 6px 14px 10px;
+      font-size: 11px;
+      color: #4a6080;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span>📈 BigShort Game</span>
+  </header>
+
+  <div class="section">
+    <div class="lbl">Bankroll</div>
+    <div class="bankroll" id="bankroll">Loading…</div>
+  </div>
+
+  <div class="section">
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="lbl">Wins</div>
+        <div class="stat-val" id="wins">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="lbl">Trades</div>
+        <div class="stat-val" id="trades">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="lbl">Win %</div>
+        <div class="stat-val" id="winpct">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="lbl">Loans</div>
+        <div class="stat-val" id="loans">0</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="toggle-btn">Toggle Game Panel</button>
+  <div id="status">Open app.bigshort.com to play</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

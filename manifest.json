@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "BigShort Game",
+  "version": "1.0.0",
+  "description": "Candlestick guessing game for app.bigshort.com. Start with $100k — can you grow it?",
+  "permissions": ["storage", "scripting", "tabs"],
+  "host_permissions": ["https://app.bigshort.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://app.bigshort.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "BigShort Game"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["game.js"],
+      "matches": ["https://app.bigshort.com/*"]
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+#bsg-overlay {
+  position: fixed;
+  inset: 0;
+  background: #060e1a;
+  z-index: 2147483640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#bsg-overlay-msg {
+  text-align: center;
+  color: #4ea3f6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#bsg-overlay-msg p { font-size: 18px; font-weight: 600; margin-top: 16px; }
+
+.bsg-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #1e3a6e;
+  border-top-color: #4ea3f6;
+  border-radius: 50%;
+  animation: bsg-spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes bsg-spin { to { transform: rotate(360deg); } }
+
+/* ── Black chart cover — slides left to reveal candles ───────────── */
+#bsg-chart-cover {
+  position: absolute;
+  top: 0;
+  background: #000;
+  z-index: 50;
+  pointer-events: none;
+  border-left: 2px solid #4ea3f6;
+}
+
+#bsg-cover-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: rgba(78, 163, 246, 0.25);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Game-mode: hide live data widgets that reveal future price ───── */
+body.bsg-game-mode .live-updates-graph,
+body.bsg-game-mode .calendar-input,
+body.bsg-game-mode .box-after-hours,
+body.bsg-game-mode .top-banner-outer {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ── BigShort Game Panel ──────────────────────────────────────── */
+
+#bsg-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 290px;
+  background: #0a1628;
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  color: #cdd9ec;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  z-index: 2147483647;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(78, 163, 246, 0.15);
+  user-select: none;
+  overflow: hidden;
+}
+
+/* Header */
+#bsg-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px 9px;
+  background: #0d1e3a;
+  border-bottom: 1px solid #1e3a6e;
+  gap: 6px;
+}
+
+#bsg-logo {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #4ea3f6;
+}
+
+#bsg-min-btn,
+#bsg-close-btn {
+  background: none;
+  border: none;
+  color: #6b88a8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+
+#bsg-min-btn:hover,
+#bsg-close-btn:hover {
+  background: #1e3a6e;
+  color: #fff;
+}
+
+/* Body */
+#bsg-body {
+  padding: 0;
+}
+
+/* Bankroll row */
+#bsg-bankroll-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 6px;
+  background: #071020;
+}
+
+#bsg-bankroll {
+  font-size: 26px;
+  font-weight: 800;
+  color: #4ea3f6;
+  letter-spacing: -0.5px;
+}
+
+#bsg-bankroll.bsg-up          { color: #22c55e; }
+#bsg-bankroll.bsg-neutral-val { color: #4ea3f6; }
+#bsg-bankroll.bsg-mid         { color: #f59e0b; }
+#bsg-bankroll.bsg-down        { color: #f87171; }
+
+.bsg-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: #4a6080;
+}
+
+/* Stats row */
+#bsg-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 14px 8px;
+  font-size: 11px;
+  color: #4a6080;
+  border-bottom: 1px solid #1e3a6e;
+}
+
+/* Bet section */
+#bsg-bet-section {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid #1e3a6e;
+}
+
+#bsg-bet-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.bsg-bet {
+  background: #0f2040;
+  border: 1px solid #1e3a6e;
+  color: #6b88a8;
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.bsg-bet:hover {
+  border-color: #4ea3f6;
+  color: #cdd9ec;
+}
+
+.bsg-bet.active {
+  background: #1e3a6e;
+  border-color: #4ea3f6;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Candle info */
+#bsg-candle-info {
+  padding: 8px 14px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #1e3a6e;
+  flex-wrap: wrap;
+  min-height: 34px;
+}
+
+/* Control row */
+#bsg-control-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 8px;
+}
+
+/* Guess row */
+#bsg-guess-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+/* Buttons */
+.bsg-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+}
+
+.bsg-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.bsg-bull {
+  background: #166534;
+  color: #dcfce7;
+}
+.bsg-bull:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.45);
+}
+
+.bsg-bear {
+  background: #7f1d1d;
+  color: #fee2e2;
+}
+.bsg-bear:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
+}
+
+.bsg-neutral {
+  background: #1e3a6e;
+  color: #cdd9ec;
+}
+.bsg-neutral:hover:not(:disabled) {
+  background: #2a52a0;
+}
+
+.bsg-primary {
+  background: linear-gradient(135deg, #1e3a6e, #2a52a0);
+  color: #fff;
+  font-size: 14px;
+}
+.bsg-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2a52a0, #3a6ec0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(78, 163, 246, 0.3);
+}
+
+.bsg-dim {
+  background: #0f2040;
+  color: #6b88a8;
+  border: 1px solid #1e3a6e;
+}
+.bsg-dim:hover:not(:disabled) {
+  background: #1e3a6e;
+  color: #cdd9ec;
+}
+
+/* Result */
+#bsg-result {
+  padding: 8px 14px;
+  text-align: center;
+  display: none;
+  font-size: 13px;
+  border-top: 1px solid #1e3a6e;
+  line-height: 1.6;
+}
+
+#bsg-result small {
+  display: block;
+  color: #6b88a8;
+  font-size: 11px;
+}
+
+.bsg-win  { color: #22c55e; font-weight: 700; }
+.bsg-loss { color: #f87171; font-weight: 700; }
+.bsg-info { color: #4ea3f6; font-weight: 600; }
+
+/* Loan row */
+#bsg-loan-row {
+  padding: 8px 14px 10px;
+  background: #2d0b0b;
+  border-top: 1px solid #7f1d1d;
+  text-align: center;
+}
+
+#bsg-loan-msg {
+  color: #fca5a5;
+  font-size: 11px;
+  margin: 0 0 6px;
+}
+
+/* Progress */
+#bsg-progress-wrap {
+  padding: 8px 14px 12px;
+  border-top: 1px solid #1e3a6e;
+}
+
+#bsg-progress-track {
+  height: 4px;
+  background: #0f2040;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#bsg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e3a6e, #4ea3f6);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+#bsg-progress-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #4a6080;
+  text-align: right;
+}
