@@ -163,6 +163,7 @@ function updateCandleInfo() {
     '<strong style="color:' + col + '">' + dir + ' $' + c[4].toFixed(2) + '</strong>' +
     '<span class="bsg-lbl" style="margin-left:6px">Open $' + c[1].toFixed(2) + '</span>' +
     '<span class="bsg-lbl" style="margin-left:6px">' + rem + ' hidden</span>';
+  updateCoverCandle(c);
 }
 
 function updateProgress() {

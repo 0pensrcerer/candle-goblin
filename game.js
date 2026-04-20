@@ -76,8 +76,9 @@ function initGame(session) {
       return;
     }
 
-    rt.chart   = chart;
-    rt.allData = extractOHLC(chart.series[idx]);
+    rt.chart          = chart;
+    rt.candleSeriesIdx = idx;
+    rt.allData        = extractOHLC(chart.series[idx]);
     rt.bet     = (session && session.bet) ? session.bet : rt.bet;
 
     if (rt.allData.length < INITIAL_REVEAL + 2) {

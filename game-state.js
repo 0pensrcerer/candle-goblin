@@ -92,15 +92,16 @@ function clearSession() {
 
 /* ---- Runtime (in-memory per page load) -------------------------- */
 var rt = {
-  chart:           null,
-  allData:         [],
-  revealedCount:   INITIAL_REVEAL,
-  candleInterval:  60000,
-  bet:             1000,
-  waitingForGuess: false,
-  cancelWait:      null,  // hard-stops waitForChart (on timeout/resolve)
-  pauseWait:       null,  // called by stopGame — keeps observer alive
-  resumeWait:      null   // called by startNewGame — re-activates check()
+  chart:            null,
+  allData:          [],
+  revealedCount:    INITIAL_REVEAL,
+  candleInterval:   60000,
+  bet:              1000,
+  waitingForGuess:  false,
+  candleSeriesIdx:  -1,   // index of the main OHLC series inside chart.series
+  cancelWait:       null,  // hard-stops waitForChart (on timeout/resolve)
+  pauseWait:        null,  // called by stopGame — keeps observer alive
+  resumeWait:       null   // called by startNewGame — re-activates check()
 };
 
 /* ---- URL helpers ------------------------------------------------- */

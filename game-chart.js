@@ -206,6 +206,10 @@ function createChartCover() {
     resizeDebounce = setTimeout(function() { updateCoverPosition(false); }, 80);
   });
   _resizeObserver.observe(container);
+
+  if (rt.allData.length) {
+    updateCoverCandle(rt.allData[rt.revealedCount - 1]);
+  }
 }
 
 function updateCoverPosition(animate) {
@@ -265,4 +269,131 @@ function removeChartCover() {
   if (_resizeObserver) { _resizeObserver.disconnect(); _resizeObserver = null; }
   var cover = document.getElementById('bsg-chart-cover');
   if (cover) cover.remove();
+}
+
+/* ---- Indicator reading ------------------------------------------ */
+// Names we know about and want to surface prominently (lower index = higher priority)
+var INDICATOR_PRIORITY = [
+  'momoflow', 'momo flow', 'momo',
+  'nofa',
+  'smartflow', 'smart flow',
+  'ultraflow', 'ultra flow',
+  'sfm2', 'sf3',
+  'pressure', 'flow', 'momentum', 'signal'
+];
+
+function getSeriesValueAtTs(series, ts) {
+  var xData = series.xData || [];
+  var yData = series.yData || series.processedYData || [];
+  if (!xData.length || !yData.length) return null;
+  var best = -1;
+  for (var i = 0; i < xData.length; i++) {
+    if (xData[i] <= ts) best = i;
+    else break;
+  }
+  if (best < 0) return null;
+  var v = yData[best];
+  if (v === null || v === undefined) return null;
+  var num = Array.isArray(v) ? v[v.length - 1] : v;
+  return (typeof num === 'number' && isFinite(num)) ? num : null;
+}
+
+function readIndicators(chart, ts) {
+  if (!chart || !chart.series) return [];
+  var results = [];
+  for (var i = 0; i < chart.series.length; i++) {
+    var s = chart.series[i];
+    if (i === rt.candleSeriesIdx) continue;
+    if (s.type === 'candlestick' || s.type === 'ohlc') continue;
+    if (!s.xData || !s.xData.length) continue;
+    var name = ((s.name || (s.options && s.options.name)) + '').trim();
+    if (!name || /^(navigator|flags|dummy|series\s*\d+)$/i.test(name)) continue;
+    var val = getSeriesValueAtTs(s, ts);
+    if (val === null) continue;
+    var nameLower = name.toLowerCase();
+    var priority  = 999;
+    for (var p = 0; p < INDICATOR_PRIORITY.length; p++) {
+      if (nameLower.indexOf(INDICATOR_PRIORITY[p]) !== -1) { priority = p; break; }
+    }
+    var color = (s.color) || (s.options && s.options.color) || '#cdd9ec';
+    results.push({ name: name, value: val, color: color, priority: priority });
+  }
+  results.sort(function(a, b) {
+    return a.priority - b.priority || a.name.localeCompare(b.name);
+  });
+  return results.slice(0, 8);
+}
+
+/* ---- Current-candle overlay drawn on top of the cover ----------- */
+function updateCoverCandle(candle) {
+  var existing = document.getElementById('bsg-cover-candle');
+  if (existing) existing.remove();
+  var cover = document.getElementById('bsg-chart-cover');
+  if (!cover || !candle) return;
+
+  var open  = candle[1], high = candle[2], low = candle[3], close = candle[4];
+  var isUp  = close >= open;
+  var color = isUp ? '#22c55e' : '#f87171';
+  var range = high - low || 0.01;
+  var pct   = (close - open) / open * 100;
+  var pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  var dir   = isUp ? '\u25b2' : '\u25bc';
+
+  // Draw an SVG candle (30 × 90 px)
+  var svgW = 30, svgH = 90, pad = 6;
+  var scale  = (svgH - 2 * pad) / range;
+  var cx     = svgW / 2;
+  var openY  = pad + (high - open)  * scale;
+  var closeY = pad + (high - close) * scale;
+  var bodyY1 = Math.min(openY, closeY);
+  var bodyH  = Math.max(3, Math.abs(closeY - openY));
+
+  var svg =
+    '<svg width="' + svgW + '" height="' + svgH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0">' +
+    '<line x1="' + cx + '" y1="' + pad + '" x2="' + cx + '" y2="' + (svgH - pad) +
+      '" stroke="' + color + '" stroke-width="2" stroke-linecap="round"/>' +
+    '<rect x="5" y="' + bodyY1.toFixed(1) + '" width="' + (svgW - 10) +
+      '" height="' + bodyH.toFixed(1) + '" fill="' + color + '" rx="2"/>' +
+    '</svg>';
+
+  // Indicators section
+  var ts         = candle[0];
+  var indicators = (rt.chart) ? readIndicators(rt.chart, ts) : [];
+  var indHtml    = '';
+  if (indicators.length) {
+    indHtml += '<div class="bsg-cc-divider"></div>';
+    indHtml += '<div class="bsg-cc-inds">';
+    for (var i = 0; i < indicators.length; i++) {
+      var ind = indicators[i];
+      // Format value: ≥1000 with comma, <1 show 3dp, otherwise 2dp
+      var absV = Math.abs(ind.value);
+      var fmtV = absV >= 1000
+        ? ind.value.toLocaleString('en-US', { maximumFractionDigits: 1 })
+        : (absV < 1 ? ind.value.toFixed(3) : ind.value.toFixed(2));
+      indHtml +=
+        '<div class="bsg-cc-ind-row">' +
+          '<span class="bsg-cc-ind-name">' + ind.name + '</span>' +
+          '<span class="bsg-cc-ind-val" style="color:' + ind.color + '">' + fmtV + '</span>' +
+        '</div>';
+    }
+    indHtml += '</div>';
+  }
+
+  var el = document.createElement('div');
+  el.id = 'bsg-cover-candle';
+  el.innerHTML =
+    '<div class="bsg-cc-label">Current Candle</div>' +
+    '<div class="bsg-cc-body">' +
+      svg +
+      '<div class="bsg-cc-ohlc">' +
+        '<div><span class="bsg-cc-k">O</span> <span class="bsg-cc-v">$' + open.toFixed(2)  + '</span></div>' +
+        '<div><span class="bsg-cc-k">H</span> <span class="bsg-cc-hi">$' + high.toFixed(2) + '</span></div>' +
+        '<div><span class="bsg-cc-k">L</span> <span class="bsg-cc-lo">$' + low.toFixed(2)  + '</span></div>' +
+        '<div><span class="bsg-cc-k">C</span> <span style="color:' + color + ';font-weight:700">$' + close.toFixed(2) + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="bsg-cc-pct" style="color:' + color + '">' + dir + ' ' + pctStr + '</div>' +
+    indHtml;
+
+  cover.appendChild(el);
 }
